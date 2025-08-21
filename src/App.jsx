@@ -14,6 +14,9 @@ import SubscriptionPage from './components/SubscriptionPage';
 import ProfilePage from './components/ProfilePage';
 import ProductAdminPage from './components/admin/ProductAdminPage';
 import UserAdminPage from './components/admin/UserAdminPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage'; 
+import ResetPasswordPage from './components/ResetPasswordPage';
+import LandingPage from './components/LandingPage';
 
 import { Box, CircularProgress } from '@mui/material';
 
@@ -22,8 +25,8 @@ function ProtectedRoutes() {
     return (
         <MainLayout>
             <Routes>
-                <Route path="/" element={<DashboardPage />} />
-                <Route path="/mascotas" element={<PetsPage />} />
+                <Route path="/dashboard/" element={<DashboardPage />} />
+                <Route path="/dashboard/mascotas" element={<PetsPage />} />
                 <Route path="/mascotas/:id" element={<PetDetailPage />} />
                 <Route path="/suscripciones" element={<SubscriptionPage />} />
                 <Route path="/nuevo-plan" element={<SubscriptionPlanPage />} />
@@ -62,19 +65,25 @@ function App() {
 
     return (
         <Routes>
-            <Route path="/login" element={!token ? <AuthScreens /> : <Navigate to="/" />} />
-            <Route path="/register" element={!token ? <AuthScreens /> : <Navigate to="/" />} />
+            {/* Rutas Públicas (cuando NO hay token) */}
+            <Route path="/login" element={!token ? <LoginPage /> : <Navigate to="/" />} />
+            <Route path="/register" element={!token ? <RegisterPage /> : <Navigate to="/login" />} />
+            <Route path="/forgot-password" element={!token ? <ForgotPasswordPage /> : <Navigate to="/" />} />
+            <Route path="/reset-password/:token" element={!token ? <ResetPasswordPage /> : <Navigate to="/" />} />
+
+            {/* Rutas Privadas (cuando SÍ hay token) */}
             <Route 
-                path="/*" 
+                path="/dashboard/*" 
                 element={
                     token ? (
-                        // --- CORRECCIÓN CLAVE AQUÍ ---
                         user?.isAdmin ? <AdminRoutes /> : <ProtectedRoutes />
                     ) : (
                         <Navigate to="/login" />
                     )
                 }
             />
+            {/* Si un usuario logueado intenta ir a una ruta pública, lo mandamos al dashboard */}
+            <Route path="*" element={<Navigate to={token ? "/dashboard" : "/"} />} />
         </Routes>
     );
 }

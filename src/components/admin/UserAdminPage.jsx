@@ -5,12 +5,16 @@ import { useState, useEffect, useContext, useCallback } from 'react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Switch, Alert, CircularProgress } from '@mui/material';
 import api from '../../api/api';
 import AuthContext from '../../context/AuthContext';
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
+import AssignPlanModal from './AssignPlanModal';
 
 function UserAdminPage() {
     const { token, user: currentUser } = useContext(AuthContext);
     const [users, setUsers] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     const fetchUsers = useCallback(async () => {
         if (!token || !currentUser?.es_admin) {
@@ -49,7 +53,15 @@ function UserAdminPage() {
             setError("No se pudo cambiar el rol del usuario.");
         }
     };
-
+    const handleOpenModal = (user) => {
+        setSelectedUser(user);
+        setIsModalOpen(true);
+    };
+    const handleCloseModal = () => setIsModalOpen(false);
+    const handleSave = () => {
+        handleCloseModal();
+        alert("¡Plan asignado con éxito!");
+    };
     return (
         <Box>
             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>Gestión de Usuarios</Typography>
@@ -64,6 +76,7 @@ function UserAdminPage() {
                                     <TableCell sx={{ fontWeight: 'bold' }}>Nombre</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>¿Es Admin?</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Acciones</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -79,6 +92,14 @@ function UserAdminPage() {
                                                 disabled={user.id === currentUser.id}
                                             />
                                         </TableCell>
+                                        <TableCell>
+                                        <Tooltip title="Asignar Plan Manualmente">
+                                            <IconButton onClick={() => handleOpenModal(user)} color="primary">
+                                                <CardGiftcardIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </TableCell>
+
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -86,6 +107,13 @@ function UserAdminPage() {
                     </TableContainer>
                 </Paper>
             )}
+            {/* --- 5. Añadimos el Modal al final --- */}
+            <AssignPlanModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                onSave={handleSave}
+                user={selectedUser}
+            />
         </Box>
     );
 }

@@ -112,6 +112,16 @@ function ProfilePage() {
                         disabled={!isEditing}
                         fullWidth 
                     />
+                    
+                    <TextField 
+                       label="Indicaciones de entrega (opcional)" 
+                       variant="outlined" 
+                       value={deliveryInstructions} 
+                       onChange={(e) => setDeliveryInstructions(e.target.value)} 
+                       fullWidth 
+                       multiline
+                      rows={2}
+                    />
                 </Stack>
 
                 <Box sx={{ pt: 4, textAlign: 'center' }}>

@@ -50,44 +50,74 @@ function SubscriptionPlanPage() {
 
     // 2. Calcular precios cuando la selección de mascotas cambie
     useEffect(() => {
-        const calculatePrices = async () => {
-            if (selectedPetIds.size === 0 || !products) {
-                setCalculatedPrices(null);
-                return;
-            }
-            setLoading(true); setError('');
-            
-            try {
-                let totals = { bueno: { total: 0 }, muyBueno: { total: 0 }, premium: { total: 0 } };
-                for (const petId of selectedPetIds) {
-                    const pet = pets.find(p => p.id === petId);
-                    if (!pet) continue;
+        const calculatePrices = useCallback(async () => {
+        if (selectedPetIds.size === 0 || !products) {
+            setCalculatedPrices(null);
+            return;
+        }
+        setLoading(true); setError('');
+        
+        try {
+            const costosBasePorMascota = {}; // Guardará { petId: { bueno: costo, muyBueno: costo, ... } }
 
-                    for (const category of ['bueno', 'muyBueno', 'premium']) {
-                        const product = products[category];
-                        if (!product) continue;
-                        
-                        // Reutilizamos la lógica de cálculo del backend
-                        const rer = 70 * Math.pow(pet.weight_kg, 0.75);
-                        let derFactor = 1.6; // Simplificado
-                        const der = rer * derFactor;
-                        const dailyGrams = (der / product.kcal_per_kg) * 1000;
-                        const monthlyKg = (dailyGrams * 30) / 1000;
-                        
-                        const priceForPet = monthlyKg * product.price_per_kg;
-                        const subtotal = priceForPet * (1 + (parseFloat(import.meta.env.VITE_PROFIT_MARGIN_PERCENTAGE) / 100));
-                        const taxes = subtotal * (parseFloat(import.meta.env.VITE_TAX_PERCENTAGE) / 100);
-                        totals[category].total += subtotal + taxes;
-                    }
+            // ETAPA 1: Calcular el costo base para cada mascota seleccionada
+            for (const petId of selectedPetIds) {
+                const pet = pets.find(p => p.id === petId);
+                if (!pet) continue;
+                
+                costosBasePorMascota[petId] = {};
+                
+                for (const category of ['bueno', 'muyBueno', 'premium']) {
+                    const product = products[category];
+                    if (!product) continue;
+                    
+                    const rer = 70 * Math.pow(pet.weight_kg, 0.75);
+                    let derFactor = 1.6;
+                    const der = rer * derFactor;
+                    const dailyGrams = (der / product.kcal_per_kg) * 1000;
+                    const monthlyKg = (dailyGrams * 30) / 1000;
+                    
+                    costosBasePorMascota[petId][category] = monthlyKg * product.price_per_kg;
                 }
-                setCalculatedPrices(totals);
-            } catch (err) {
-                setError('No se pudo calcular el precio.');
-            } finally {
-                setLoading(false);
             }
-        };
+
+            // ETAPA 2: Aplicar margen al más caro de cada categoría y sumar
+            const totals = { bueno: { total: 0 }, muyBueno: { total: 0 }, premium: { total: 0 } };
+
+            for (const category of ['bueno', 'muyBueno', 'premium']) {
+                const costosDeCategoria = Object.values(costosBasePorMascota).map(costos => costos[category]);
+                if (costosDeCategoria.length === 0) continue;
+
+                const costoMasAlto = Math.max(...costosDeCategoria);
+                let margenAplicado = false;
+                let totalCategoria = 0;
+
+                costosDeCategoria.forEach(costo => {
+                    let subtotal = costo;
+                    if (costo === costoMasAlto && !margenAplicado) {
+                        subtotal = subtotal * (1 + (parseFloat(import.meta.env.VITE_PROFIT_MARGIN_PERCENTAGE) / 100));
+                        margenAplicado = true;
+                    }
+                    const impuestos = subtotal * (parseFloat(import.meta.env.VITE_TAX_PERCENTAGE) / 100);
+                    totalCategoria += subtotal + impuestos;
+                });
+                totals[category].total = totalCategoria;
+            }
+
+            setCalculatedPrices(totals);
+        } catch (err) {
+            setError('No se pudo calcular el precio.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedPetIds, pets, products, token]); // Añadimos token a las dependencias
+
+    useEffect(() => {
         calculatePrices();
+    }, [calculatePrices]);
+        
+    calculatePrices();
     }, [selectedPetIds, pets, products]);
 
     const handlePetSelect = (petId) => {

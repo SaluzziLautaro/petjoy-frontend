@@ -13,7 +13,7 @@ function RegisterPage({ onSwitchToLogin }) {
     const [celular, setCelular] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
+    const [deliveryInstructions, setDeliveryInstructions] = useState(''); 
     const handleRegister = async (e) => {
         e.preventDefault();
         setError('');
@@ -48,7 +48,7 @@ function RegisterPage({ onSwitchToLogin }) {
                         {/* --- CORRECCIÓN AQUÍ: Añadimos 'required' --- */}
                         <TextField label="Dirección" variant="outlined" value={direccion} onChange={(e) => setDireccion(e.target.value)} required fullWidth />
                         <TextField label="Celular" variant="outlined" value={celular} onChange={(e) => setCelular(e.target.value)} required fullWidth />
-                        
+                        <TextField label="Indicaciones de entrega (opcional)" variant="outlined" value={deliveryInstructions} onChange={(e) => setDeliveryInstructions(e.target.value)} fullWidth multiline rows={2}/>
                         <Button type="submit" variant="contained" size="large" fullWidth sx={{ backgroundColor: '#F2994A', '&:hover': { backgroundColor: '#e68a3e' }, borderRadius: '50px', py: 1.5, fontWeight: 'bold' }}>
                             Registrarme
                         </Button>

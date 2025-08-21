@@ -58,9 +58,20 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
         setUser(null);
     };
+    const googleLogin = async (googleToken) => {
+        // Le enviamos el token de Google a nuestro backend
+        const response = await api.post('/api/auth/google-login', { token: googleToken });
+        const { token } = response.data; // Recibimos nuestro propio token de sesión
+        
+        // El resto es igual que un login normal
+        localStorage.setItem('token', token);
+        const decodedToken = jwtDecode(token);
+        setUser(decodedToken.user);
+        setToken(token);
+    };
     
     return (
-        <AuthContext.Provider value={{ token, user, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ token, user, loading, login, register, logout, googleLogin }}>
             {children}
         </AuthContext.Provider>
     );
